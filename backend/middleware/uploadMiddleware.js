@@ -1,13 +1,25 @@
 const multer = require("multer");
-const path = require("path");
+const { v2: cloudinary } = require("cloudinary");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
-//Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Configure Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "profile-images",
+    allowed_formats: ["jpg", "jpeg", "png"],
+    public_id: (req, file) => {
+      const timestamp = Date.now();
+      const originalName = file.originalname.split(".")[0];
+      return `${timestamp}-${originalName}`;
+    },
   },
 });
 
@@ -24,4 +36,4 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter });
 
 module.exports = upload;
-// This middleware will handle the file upload for the profile image
+// This middleware will handle the file upload for the profile image using Cloudinary
